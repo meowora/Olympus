@@ -1,5 +1,7 @@
 package earth.terrarium.olympus.client.pipelines;
 
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
@@ -22,6 +24,7 @@ public class RoundedRectangle {
     public static final RenderPipeline PIPELINE = RenderPipeline.builder()
             .withLocation(Identifier.fromNamespaceAndPath("olympus", "rounded_rect"))
             .withBindGroupLayout(LAYOUT)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withFragmentShader(Identifier.fromNamespaceAndPath("olympus", "core/rounded_rect"))
             .withVertexShader(Identifier.fromNamespaceAndPath("olympus", "core/rounded_rect"))
             .withPrimitiveTopology(PrimitiveTopology.QUADS)

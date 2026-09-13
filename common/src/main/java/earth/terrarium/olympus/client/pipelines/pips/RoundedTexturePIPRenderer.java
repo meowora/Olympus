@@ -10,6 +10,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import earth.terrarium.olympus.client.pipelines.RoundedRectangle;
 import earth.terrarium.olympus.client.pipelines.RoundedTexture;
 import earth.terrarium.olympus.client.pipelines.renderer.PipelineRenderer;
+import earth.terrarium.olympus.client.pipelines.renderer.PipelineTarget;
 import earth.terrarium.olympus.client.pipelines.uniforms.RoundedRectangleUniform;
 import earth.terrarium.olympus.client.pipelines.uniforms.RoundedTextureUniform;
 import earth.terrarium.olympus.client.utils.GuiGraphicsHelper;
@@ -90,7 +91,7 @@ public class RoundedTexturePIPRenderer extends PictureInPictureRenderer<RoundedT
                 ))
                 .textures(state.texture())
                 .color(state.color())
-                .draw();
+                .draw(new PipelineTarget(this));
         }
 
         this.lastState = state;

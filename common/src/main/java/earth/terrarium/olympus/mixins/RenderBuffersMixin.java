@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class RenderBuffersMixin {
 
     @Inject(method = "endFrame", at = @At(value = "TAIL"))
-    private static void endFrame(CallbackInfo ci) {
+    private void endFrame(CallbackInfo ci) {
         RenderPipelineUniformsStorage.endFrame();
     }
 }

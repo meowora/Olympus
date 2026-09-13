@@ -1,10 +1,13 @@
 package earth.terrarium.olympus.client.pipelines.renderer;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import earth.terrarium.olympus.client.pipelines.uniforms.RenderPipelineUniforms;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.DynamicGpuDataStorage;
 
@@ -42,11 +45,15 @@ public class PipelineRendererBuilder {
     }
 
     public void draw() {
+        draw(new PipelineTarget(Minecraft.getInstance().gameRenderer.mainRenderTarget()));
+    }
+
+    public void draw(PipelineTarget target) {
         List<Pair<String, GpuBufferSlice>> dynamicUniforms = new ArrayList<>();
         for (UniformEntry<?> entry : this.uniforms) {
             dynamicUniforms.add(Pair.of(entry.uniform.name(), entry.write()));
         }
-        PipelineRenderer.draw(this.pipeline, this.mesh, this.color, this.textures, pass -> {
+        PipelineRenderer.draw(target, this.pipeline, this.mesh, this.color, this.textures, pass -> {
             for (var entry : dynamicUniforms) {
                 pass.setUniform(entry.getFirst(), entry.getSecond());
             }

@@ -1,6 +1,8 @@
 package earth.terrarium.olympus.client.pipelines;
 
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -24,6 +26,7 @@ public class RoundedTexture {
     public static final RenderPipeline PIPELINE = RenderPipeline.builder()
             .withLocation(Identifier.fromNamespaceAndPath("olympus", "rounded_tex"))
             .withBindGroupLayout(LAYOUT)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withFragmentShader(Identifier.fromNamespaceAndPath("olympus", "core/rounded_tex"))
             .withVertexShader(Identifier.fromNamespaceAndPath("olympus", "core/rounded_tex"))
             .withPrimitiveTopology(PrimitiveTopology.QUADS)

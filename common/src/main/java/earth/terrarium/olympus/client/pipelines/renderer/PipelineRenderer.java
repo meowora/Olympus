@@ -1,13 +1,14 @@
 package earth.terrarium.olympus.client.pipelines.renderer;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.commands.RenderPassDescriptor;
 import com.mojang.renderpearl.api.device.GpuDevice;
 import com.mojang.renderpearl.api.pipeline.IndexType;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.MeshData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.util.ARGB;
@@ -15,47 +16,26 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.function.Consumer;
 
 public class PipelineRenderer {
-
-    private record Buffers(
-            GpuBuffer vertex,
-            GpuBuffer index,
-            IndexType type
-    ){
-        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
-            GpuBuffer vertex = device.createBuffer(() -> "Vertex data for: " + pipeline.getLocation(), GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer());
-            var indexBuffer = mesh.indexBuffer();
-            if (indexBuffer == null) {
-                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
-                return new Buffers(
-                        vertex,
-                        storage.getBuffer(mesh.drawState().indexCount()),
-                        storage.type()
-                );
-            }
-            return new Buffers(
-                    vertex,
-                    device.createBuffer(() -> "Vertex Index for: " + pipeline.getLocation(), GpuBuffer.USAGE_INDEX, indexBuffer),
-                    mesh.drawState().indexType()
-            );
-        }
-    }
 
     private static GpuBufferSlice getDynamicUniforms(int color) {
         return RenderSystem.getDynamicUniforms()
                 .writeTransform(
                         RenderSystem.getModelViewMatrixCopy(),
-                        new Vector4f(ARGB.redFloat(color), ARGB.greenFloat(color), ARGB.blueFloat(color), ARGB.alphaFloat(color)),
+                        new Vector4f(
+                                ARGB.redFloat(color),
+                                ARGB.greenFloat(color),
+                                ARGB.blueFloat(color),
+                                ARGB.alphaFloat(color)),
                         new Vector3f(),
                         new Matrix4f()
                 );
     }
 
     protected static void draw(
+            PipelineTarget target,
             RenderPipeline pipeline,
             MeshData mesh,
             int color,
@@ -66,16 +46,19 @@ public class PipelineRenderer {
 
         var buffers = Buffers.of(mesh, pipeline, device);
 
-        var target = Minecraft.getInstance().gameRenderer.mainRenderTarget();
         var uniforms = getDynamicUniforms(color);
 
-        try (mesh; var pass = device.createCommandEncoder().createRenderPass(
-                () -> "Olympus Pipeline Render Pass for: " + pipeline.getLocation(),
-                target.getColorTextureView(),
-                Optional.empty(),
-                target.hasDepth() ? target.getDepthTextureView() : null,
-                OptionalDouble.empty()
-        )) {
+        var descriptor = RenderPassDescriptor.builder(() -> "Olympus Pipeline Render Pass for: " + pipeline.getLocation());
+
+        if (!pipeline.getColorTargetStates().isEmpty()) {
+            descriptor.withColorAttachment(target.texture());
+            for (var i = 1; i < pipeline.getColorTargetStates().size(); i++) {
+                descriptor.withUnusedColorAttachment();
+            }
+        }
+        descriptor.withDepthAttachment(target.depthTexture());
+
+        try (mesh; var pass = device.createCommandEncoder().createRenderPass(descriptor.build())) {
             pass.setPipeline(RenderSystem.getCompiledPipeline(pipeline));
 
             var scissor = RenderSystem.getScissorStateForRenderTypeDraws();
@@ -83,9 +66,15 @@ public class PipelineRenderer {
                 pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
             }
 
-            if (textures.texure0() != null) pass.setUniform("Sampler0", textures.texure0(), textures.sampler0());
-            if (textures.texure1() != null) pass.setUniform("Sampler1", textures.texure1(), textures.sampler1());
-            if (textures.texure2() != null) pass.setUniform("Sampler2", textures.texure2(), textures.sampler2());
+            if (textures.texure0() != null) {
+                pass.setUniform("Sampler0", textures.texure0(), textures.sampler0());
+            }
+            if (textures.texure1() != null) {
+                pass.setUniform("Sampler1", textures.texure1(), textures.sampler1());
+            }
+            if (textures.texure2() != null) {
+                pass.setUniform("Sampler2", textures.texure2(), textures.sampler2());
+            }
 
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", uniforms);
@@ -101,5 +90,35 @@ public class PipelineRenderer {
 
     public static PipelineRendererBuilder builder(RenderPipeline pipeline, MeshData mesh) {
         return new PipelineRendererBuilder(pipeline, mesh);
+    }
+
+    private record Buffers(
+            GpuBuffer vertex,
+            GpuBuffer index,
+            IndexType type
+    ) {
+        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
+            GpuBuffer vertex = device.createBuffer(
+                    () -> "Vertex data for: " + pipeline.getLocation(),
+                    GpuBuffer.USAGE_VERTEX,
+                    mesh.vertexBuffer());
+            var indexBuffer = mesh.indexBuffer();
+            if (indexBuffer == null) {
+                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
+                return new Buffers(
+                        vertex,
+                        storage.getBuffer(mesh.drawState().indexCount()),
+                        storage.type()
+                );
+            }
+            return new Buffers(
+                    vertex,
+                    device.createBuffer(
+                            () -> "Vertex Index for: " + pipeline.getLocation(),
+                            GpuBuffer.USAGE_INDEX,
+                            indexBuffer),
+                    mesh.drawState().indexType()
+            );
+        }
     }
 }

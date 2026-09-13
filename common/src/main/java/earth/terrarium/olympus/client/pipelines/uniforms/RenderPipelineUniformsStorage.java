@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import net.minecraft.client.renderer.DynamicGpuDataStorage;
+import net.minecraft.client.renderer.DynamicGpuDataStorageMapped;
 import net.minecraft.client.renderer.DynamicGpuDataStorageNonMapped;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class RenderPipelineUniformsStorage {
             Std140SizeCalculator size
     ) {
         return Suppliers.memoize(() -> {
-            var storage = new DynamicGpuDataStorageNonMapped<T>(name, size.get(), GpuBuffer.USAGE_UNIFORM, capacity);
+            var storage = new DynamicGpuDataStorageMapped<T>(name, size.get(), GpuBuffer.USAGE_UNIFORM, capacity);
             RenderPipelineUniformsStorage.storage.add(storage);
             return storage;
         });

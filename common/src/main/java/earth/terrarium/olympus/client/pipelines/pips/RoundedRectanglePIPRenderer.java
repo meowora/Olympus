@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import earth.terrarium.olympus.client.pipelines.RoundedRectangle;
 import earth.terrarium.olympus.client.pipelines.renderer.PipelineRenderer;
+import earth.terrarium.olympus.client.pipelines.renderer.PipelineTarget;
 import earth.terrarium.olympus.client.pipelines.uniforms.RoundedRectangleUniform;
 import earth.terrarium.olympus.client.utils.GuiGraphicsHelper;
 import earth.terrarium.olympus.client.utils.PipRendererHelper;
@@ -111,7 +112,7 @@ public class RoundedRectanglePIPRenderer extends PictureInPictureRenderer<Rounde
                             new Vector2f(scaledWidth / 2f, scaledHeight / 2f),
                             scale
                     ))
-                    .draw();
+                    .draw(new PipelineTarget(this));
         }
 
         this.lastState = state;
