@@ -1,12 +1,12 @@
 package earth.terrarium.olympus.client.pipelines.renderer;
 
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.datafixers.util.Pair;
 import earth.terrarium.olympus.client.pipelines.uniforms.RenderPipelineUniforms;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.renderer.DynamicUniformStorage;
+import net.minecraft.client.renderer.DynamicGpuDataStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class PipelineRendererBuilder {
         this.mesh = mesh;
     }
 
-    public <T extends RenderPipelineUniforms> PipelineRendererBuilder uniform(Supplier<DynamicUniformStorage<T>> storage, T uniform) {
+    public <T extends RenderPipelineUniforms> PipelineRendererBuilder uniform(Supplier<DynamicGpuDataStorage<T>> storage, T uniform) {
         this.uniforms.add(new UniformEntry<>(uniform, storage));
         return this;
     }
@@ -55,11 +55,11 @@ public class PipelineRendererBuilder {
 
     private record UniformEntry<T extends RenderPipelineUniforms>(
             T uniform,
-            Supplier<DynamicUniformStorage<T>> storage
+            Supplier<DynamicGpuDataStorage<T>> storage
     ) {
 
         public GpuBufferSlice write() {
-            return storage.get().writeUniform(uniform);
+            return storage.get().writeData(uniform);
         }
     }
 }

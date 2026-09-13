@@ -1,9 +1,9 @@
 package earth.terrarium.olympus.client.pipelines;
 
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.pipeline.BindGroupLayout;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.shaders.UniformType;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import earth.terrarium.olympus.client.pipelines.pips.RoundedRectanglePIPRenderer;
 import earth.terrarium.olympus.client.pipelines.uniforms.RoundedRectangleUniform;

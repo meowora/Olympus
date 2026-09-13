@@ -1,6 +1,6 @@
 package earth.terrarium.olympus.client.utils;
 
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import earth.terrarium.olympus.mixins.PipRendererAccessor;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import org.jetbrains.annotations.ApiStatus;
