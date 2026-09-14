@@ -23,12 +23,9 @@ public class PipelineRenderer {
             GpuBuffer vertex,
             GpuBuffer index,
             IndexType type
-    ) {
+    ){
         private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
-            GpuBuffer vertex = device.createBuffer(
-                    () -> "Vertex data for: " + pipeline.getLocation(),
-                    GpuBuffer.USAGE_VERTEX,
-                    mesh.vertexBuffer());
+            GpuBuffer vertex = device.createBuffer(() -> "Vertex data for: " + pipeline.getLocation(), GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer());
             var indexBuffer = mesh.indexBuffer();
             if (indexBuffer == null) {
                 var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
@@ -40,10 +37,7 @@ public class PipelineRenderer {
             }
             return new Buffers(
                     vertex,
-                    device.createBuffer(
-                            () -> "Vertex Index for: " + pipeline.getLocation(),
-                            GpuBuffer.USAGE_INDEX,
-                            indexBuffer),
+                    device.createBuffer(() -> "Vertex Index for: " + pipeline.getLocation(), GpuBuffer.USAGE_INDEX, indexBuffer),
                     mesh.drawState().indexType()
             );
         }
@@ -53,11 +47,7 @@ public class PipelineRenderer {
         return RenderSystem.getDynamicUniforms()
                 .writeTransform(
                         RenderSystem.getModelViewMatrixCopy(),
-                        new Vector4f(
-                                ARGB.redFloat(color),
-                                ARGB.greenFloat(color),
-                                ARGB.blueFloat(color),
-                                ARGB.alphaFloat(color)),
+                        new Vector4f(ARGB.redFloat(color), ARGB.greenFloat(color), ARGB.blueFloat(color), ARGB.alphaFloat(color)),
                         new Vector3f(),
                         new Matrix4f()
                 );
