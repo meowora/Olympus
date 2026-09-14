@@ -9,7 +9,6 @@ import com.mojang.renderpearl.api.commands.RenderPassDescriptor;
 import com.mojang.renderpearl.api.device.GpuDevice;
 import com.mojang.renderpearl.api.pipeline.IndexType;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
@@ -19,6 +18,36 @@ import org.joml.Vector4f;
 import java.util.function.Consumer;
 
 public class PipelineRenderer {
+
+    private record Buffers(
+            GpuBuffer vertex,
+            GpuBuffer index,
+            IndexType type
+    ) {
+        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
+            GpuBuffer vertex = device.createBuffer(
+                    () -> "Vertex data for: " + pipeline.getLocation(),
+                    GpuBuffer.USAGE_VERTEX,
+                    mesh.vertexBuffer());
+            var indexBuffer = mesh.indexBuffer();
+            if (indexBuffer == null) {
+                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
+                return new Buffers(
+                        vertex,
+                        storage.getBuffer(mesh.drawState().indexCount()),
+                        storage.type()
+                );
+            }
+            return new Buffers(
+                    vertex,
+                    device.createBuffer(
+                            () -> "Vertex Index for: " + pipeline.getLocation(),
+                            GpuBuffer.USAGE_INDEX,
+                            indexBuffer),
+                    mesh.drawState().indexType()
+            );
+        }
+    }
 
     private static GpuBufferSlice getDynamicUniforms(int color) {
         return RenderSystem.getDynamicUniforms()
@@ -66,15 +95,9 @@ public class PipelineRenderer {
                 pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
             }
 
-            if (textures.texure0() != null) {
-                pass.setUniform("Sampler0", textures.texure0(), textures.sampler0());
-            }
-            if (textures.texure1() != null) {
-                pass.setUniform("Sampler1", textures.texure1(), textures.sampler1());
-            }
-            if (textures.texure2() != null) {
-                pass.setUniform("Sampler2", textures.texure2(), textures.sampler2());
-            }
+            if (textures.texure0() != null) pass.setUniform("Sampler0", textures.texure0(), textures.sampler0());
+            if (textures.texure1() != null) pass.setUniform("Sampler1", textures.texure1(), textures.sampler1());
+            if (textures.texure2() != null) pass.setUniform("Sampler2", textures.texure2(), textures.sampler2());
 
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", uniforms);
@@ -90,35 +113,5 @@ public class PipelineRenderer {
 
     public static PipelineRendererBuilder builder(RenderPipeline pipeline, MeshData mesh) {
         return new PipelineRendererBuilder(pipeline, mesh);
-    }
-
-    private record Buffers(
-            GpuBuffer vertex,
-            GpuBuffer index,
-            IndexType type
-    ) {
-        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
-            GpuBuffer vertex = device.createBuffer(
-                    () -> "Vertex data for: " + pipeline.getLocation(),
-                    GpuBuffer.USAGE_VERTEX,
-                    mesh.vertexBuffer());
-            var indexBuffer = mesh.indexBuffer();
-            if (indexBuffer == null) {
-                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
-                return new Buffers(
-                        vertex,
-                        storage.getBuffer(mesh.drawState().indexCount()),
-                        storage.type()
-                );
-            }
-            return new Buffers(
-                    vertex,
-                    device.createBuffer(
-                            () -> "Vertex Index for: " + pipeline.getLocation(),
-                            GpuBuffer.USAGE_INDEX,
-                            indexBuffer),
-                    mesh.drawState().indexType()
-            );
-        }
     }
 }
