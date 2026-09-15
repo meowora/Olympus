@@ -7,11 +7,9 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
-import earth.terrarium.olympus.client.pipelines.RoundedRectangle;
 import earth.terrarium.olympus.client.pipelines.RoundedTexture;
-import earth.terrarium.olympus.client.pipelines.renderer.PipelineRenderer;
+import earth.terrarium.olympus.client.pipelines.renderer.PipelineSubmit;
 import earth.terrarium.olympus.client.pipelines.renderer.PipelineTarget;
-import earth.terrarium.olympus.client.pipelines.uniforms.RoundedRectangleUniform;
 import earth.terrarium.olympus.client.pipelines.uniforms.RoundedTextureUniform;
 import earth.terrarium.olympus.client.utils.GuiGraphicsHelper;
 import earth.terrarium.olympus.client.utils.PipRendererHelper;
@@ -24,7 +22,6 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.gui.BlitRenderState;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
-import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3x2f;
 import org.joml.Vector2f;
@@ -82,7 +79,7 @@ public class RoundedTexturePIPRenderer extends PictureInPictureRenderer<RoundedT
             bufferBuilder.addVertex(scaledWidth, scaledHeight, 0f).setUv(state.u1(), state.v1()).setColor(-1);
             bufferBuilder.addVertex(scaledWidth, 0f, 0f).setUv(state.u1(), state.v0()).setColor(-1);
 
-            PipelineRenderer.builder(RoundedTexture.PIPELINE, bufferBuilder.buildOrThrow())
+            PipelineSubmit.builder(RoundedTexture.PIPELINE, bufferBuilder.buildOrThrow())
                 .uniform(RoundedTextureUniform.STORAGE, RoundedTextureUniform.of(
                     new Vector4f(state.borderRadius()),
                     new Vector2f(scaledWidth, scaledHeight),

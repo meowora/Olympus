@@ -8,7 +8,7 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import earth.terrarium.olympus.client.pipelines.RoundedRectangle;
-import earth.terrarium.olympus.client.pipelines.renderer.PipelineRenderer;
+import earth.terrarium.olympus.client.pipelines.renderer.PipelineSubmit;
 import earth.terrarium.olympus.client.pipelines.renderer.PipelineTarget;
 import earth.terrarium.olympus.client.pipelines.uniforms.RoundedRectangleUniform;
 import earth.terrarium.olympus.client.utils.GuiGraphicsHelper;
@@ -80,7 +80,7 @@ public class RoundedRectanglePIPRenderer extends PictureInPictureRenderer<Rounde
             bufferBuilder.addVertex(scaledWidth, scaledHeight, 0f).setColor(state.color());
             bufferBuilder.addVertex(scaledWidth, 0f, 0f).setColor(state.color());
 
-            PipelineRenderer.builder(RoundedRectangle.PIPELINE, bufferBuilder.buildOrThrow())
+            PipelineSubmit.builder(RoundedRectangle.PIPELINE, bufferBuilder.buildOrThrow())
                     .uniform(RoundedRectangleUniform.STORAGE, RoundedRectangleUniform.of(
                             new Vector4f(
                                     ARGB.redFloat(state.borderColorTopLeft()),
@@ -112,7 +112,7 @@ public class RoundedRectanglePIPRenderer extends PictureInPictureRenderer<Rounde
                             new Vector2f(scaledWidth / 2f, scaledHeight / 2f),
                             scale
                     ))
-                    .draw(new PipelineTarget(this));
+                    .submit(submitNodeCollector);
         }
 
         this.lastState = state;

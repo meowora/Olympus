@@ -1,21 +1,20 @@
 package earth.terrarium.olympus.client.pipelines.renderer;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.renderpearl.api.textures.GpuTextureView;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import earth.terrarium.olympus.client.pipelines.uniforms.RenderPipelineUniforms;
-import net.minecraft.client.Minecraft;
+import earth.terrarium.olympus.client.utils.SubmitNodeCollectorHelper;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.DynamicGpuDataStorage;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class PipelineRendererBuilder {
+public class PipelineSubmitBuilder {
 
     private final RenderPipeline pipeline;
     private final MeshData mesh;
@@ -24,40 +23,49 @@ public class PipelineRendererBuilder {
     private TextureSetup textures = TextureSetup.noTexture();
     private int color = -1;
 
-    protected PipelineRendererBuilder(RenderPipeline pipeline, MeshData mesh) {
+    protected PipelineSubmitBuilder(RenderPipeline pipeline, MeshData mesh) {
         this.pipeline = pipeline;
         this.mesh = mesh;
     }
 
-    public <T extends RenderPipelineUniforms> PipelineRendererBuilder uniform(Supplier<DynamicGpuDataStorage<T>> storage, T uniform) {
+    public <T extends RenderPipelineUniforms> PipelineSubmitBuilder uniform(
+            Supplier<DynamicGpuDataStorage<T>> storage,
+            T uniform
+    ) {
         this.uniforms.add(new UniformEntry<>(uniform, storage));
         return this;
     }
 
-    public PipelineRendererBuilder textures(TextureSetup textures) {
+    public PipelineSubmitBuilder textures(TextureSetup textures) {
         this.textures = textures;
         return this;
     }
 
-    public PipelineRendererBuilder color(int color) {
+    public PipelineSubmitBuilder color(int color) {
         this.color = color;
         return this;
     }
 
-    public void draw() {
-        draw(new PipelineTarget(Minecraft.getInstance().gameRenderer.mainRenderTarget()));
-    }
-
-    public void draw(PipelineTarget target) {
+    public PipelineSubmit build() {
         List<Pair<String, GpuBufferSlice>> dynamicUniforms = new ArrayList<>();
         for (UniformEntry<?> entry : this.uniforms) {
             dynamicUniforms.add(Pair.of(entry.uniform.name(), entry.write()));
         }
-        PipelineRenderer.draw(target, this.pipeline, this.mesh, this.color, this.textures, pass -> {
-            for (var entry : dynamicUniforms) {
-                pass.setUniform(entry.getFirst(), entry.getSecond());
-            }
-        });
+        return new PipelineSubmit(
+                this.pipeline,
+                this.mesh,
+                this.color,
+                this.textures,
+                pass -> {
+                    for (var entry : dynamicUniforms) {
+                        pass.setUniform(entry.getFirst(), entry.getSecond());
+                    }
+                }
+        );
+    }
+
+    public void submit(SubmitNodeCollector collector) {
+        SubmitNodeCollectorHelper.submit(collector, this.build());
     }
 
     private record UniformEntry<T extends RenderPipelineUniforms>(
