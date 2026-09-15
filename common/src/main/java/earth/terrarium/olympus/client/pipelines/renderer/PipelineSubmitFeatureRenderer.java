@@ -24,6 +24,36 @@ import java.util.List;
 public class PipelineSubmitFeatureRenderer implements FeatureRenderer<PipelineSubmit> {
     public static FeatureRendererType<PipelineSubmit> TYPE = FeatureRendererType.create("olympus:pipeline_renderer");
 
+    private record Buffers(
+            GpuBuffer vertex,
+            GpuBuffer index,
+            IndexType type
+    ) {
+        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
+            GpuBuffer vertex = device.createBuffer(
+                    () -> "Vertex data for: " + pipeline.getLocation(),
+                    GpuBuffer.USAGE_VERTEX,
+                    mesh.vertexBuffer());
+            var indexBuffer = mesh.indexBuffer();
+            if (indexBuffer == null) {
+                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
+                return new Buffers(
+                        vertex,
+                        storage.getBuffer(mesh.drawState().indexCount()),
+                        storage.type()
+                );
+            }
+            return new Buffers(
+                    vertex,
+                    device.createBuffer(
+                            () -> "Vertex Index for: " + pipeline.getLocation(),
+                            GpuBuffer.USAGE_INDEX,
+                            indexBuffer),
+                    mesh.drawState().indexType()
+            );
+        }
+    }
+
     private static GpuBufferSlice getDynamicUniforms(int color) {
         return RenderSystem.getDynamicUniforms()
                 .writeTransform(
@@ -88,36 +118,6 @@ public class PipelineSubmitFeatureRenderer implements FeatureRenderer<PipelineSu
 
                 pass.drawIndexed(mesh.drawState().indexCount(), 1, 0, 0, 0);
             }
-        }
-    }
-
-    private record Buffers(
-            GpuBuffer vertex,
-            GpuBuffer index,
-            IndexType type
-    ) {
-        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
-            GpuBuffer vertex = device.createBuffer(
-                    () -> "Vertex data for: " + pipeline.getLocation(),
-                    GpuBuffer.USAGE_VERTEX,
-                    mesh.vertexBuffer());
-            var indexBuffer = mesh.indexBuffer();
-            if (indexBuffer == null) {
-                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
-                return new Buffers(
-                        vertex,
-                        storage.getBuffer(mesh.drawState().indexCount()),
-                        storage.type()
-                );
-            }
-            return new Buffers(
-                    vertex,
-                    device.createBuffer(
-                            () -> "Vertex Index for: " + pipeline.getLocation(),
-                            GpuBuffer.USAGE_INDEX,
-                            indexBuffer),
-                    mesh.drawState().indexType()
-            );
         }
     }
 }
