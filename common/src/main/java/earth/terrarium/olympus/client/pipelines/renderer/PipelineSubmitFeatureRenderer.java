@@ -1,13 +1,12 @@
 package earth.terrarium.olympus.client.pipelines.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.RenderPass;
-import com.mojang.renderpearl.api.device.GpuDevice;
-import com.mojang.renderpearl.api.pipeline.IndexType;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import java.util.ArrayList;
+import net.minecraft.client.renderer.StagedVertexBuffer;
 import net.minecraft.client.renderer.feature.FeatureFrameContext;
 import net.minecraft.client.renderer.feature.FeatureRenderer;
 import net.minecraft.client.renderer.feature.FeatureRendererType;
@@ -23,101 +22,86 @@ import java.util.List;
 
 public class PipelineSubmitFeatureRenderer implements FeatureRenderer<PipelineSubmit> {
     public static FeatureRendererType<PipelineSubmit> TYPE = FeatureRendererType.create("olympus:pipeline_renderer");
-
-    private record Buffers(
-            GpuBuffer vertex,
-            GpuBuffer index,
-            IndexType type
-    ) {
-        private static Buffers of(MeshData mesh, RenderPipeline pipeline, GpuDevice device) {
-            GpuBuffer vertex = device.createBuffer(
-                    () -> "Vertex data for: " + pipeline.getLocation(),
-                    GpuBuffer.USAGE_VERTEX,
-                    mesh.vertexBuffer());
-            var indexBuffer = mesh.indexBuffer();
-            if (indexBuffer == null) {
-                var storage = RenderSystem.getSequentialBuffer(mesh.drawState().primitiveTopology());
-                return new Buffers(
-                        vertex,
-                        storage.getBuffer(mesh.drawState().indexCount()),
-                        storage.type()
-                );
-            }
-            return new Buffers(
-                    vertex,
-                    device.createBuffer(
-                            () -> "Vertex Index for: " + pipeline.getLocation(),
-                            GpuBuffer.USAGE_INDEX,
-                            indexBuffer),
-                    mesh.drawState().indexType()
-            );
-        }
-    }
+    private final List<Group> draws = new ArrayList<>();
 
     private static GpuBufferSlice getDynamicUniforms(int color) {
-        return RenderSystem.getDynamicUniforms()
-                .writeTransform(
-                        RenderSystem.getModelViewMatrixCopy(),
-                        new Vector4f(
-                                ARGB.redFloat(color),
-                                ARGB.greenFloat(color),
-                                ARGB.blueFloat(color),
-                                ARGB.alphaFloat(color)),
-                        new Vector3f(),
-                        new Matrix4f()
-                );
+        return RenderSystem.getDynamicUniforms().writeTransform(
+            RenderSystem.getModelViewMatrixCopy(),
+            new Vector4f(ARGB.redFloat(color), ARGB.greenFloat(color), ARGB.blueFloat(color), ARGB.alphaFloat(color)),
+            new Vector3f(),
+            new Matrix4f());
     }
 
     @Override
     public void prepareGroup(
-            @NonNull FeatureFrameContext context,
-            @NonNull List<PipelineSubmit> pipelineSubmitNodes,
-            boolean strictlyOrdered
-    ) {
+        @NonNull FeatureFrameContext context,
+        @NonNull List<PipelineSubmit> pipelineSubmitNodes,
+        boolean strictlyOrdered) {
+        var stagedVertexBuffer = context.stagedVertexBuffer();
+        for (var pipelineSubmitNode : pipelineSubmitNodes) {
+
+            var draw = stagedVertexBuffer.appendDraw(pipelineSubmitNode.format(), pipelineSubmitNode.primitiveTopology());
+
+            var builder = stagedVertexBuffer.getVertexBuilder(draw);
+
+            pipelineSubmitNode.meshBuilder().accept(builder);
+
+            draws.add(new Group(draw, pipelineSubmitNode));
+        }
     }
 
     @Override
     public void executeGroup(
-            @NonNull FeatureFrameContext context,
-            @Nullable OitStage stage,
-            @NonNull RenderPass pass,
-            int groupIndex,
-            List<PipelineSubmit> pipelineSubmitNodes,
-            boolean strictlyOrdered
-    ) {
-        for (var pipelineSubmitNode : pipelineSubmitNodes) {
-            try (var mesh = pipelineSubmitNode.mesh()) {
-                var buffers = Buffers.of(mesh, pipelineSubmitNode.pipeline(), RenderSystem.getDevice());
-                pass.setPipeline(RenderSystem.getCompiledPipeline(pipelineSubmitNode.pipeline()));
+        @NonNull FeatureFrameContext context,
+        @Nullable OitStage stage,
+        @NonNull RenderPass pass,
+        int groupIndex,
+        List<PipelineSubmit> pipelineSubmitNodes,
+        boolean strictlyOrdered) {
+        var stagedVertexBuffer = context.stagedVertexBuffer();
 
-                var scissor = RenderSystem.getScissorStateForRenderTypeDraws();
-                if (scissor.enabled()) {
-                    pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
-                }
-                var textures = pipelineSubmitNode.textures();
+        for (var group : this.draws) {
+            var submit = group.submit;
+            var executeInfo = stagedVertexBuffer.getExecuteInfo(group.draw);
 
-                if (textures.texure0() != null) {
-                    pass.setUniform("Sampler0", textures.texure0(), textures.sampler0());
-                }
-                if (textures.texure1() != null) {
-                    pass.setUniform("Sampler1", textures.texure1(), textures.sampler1());
-                }
-                if (textures.texure2() != null) {
-                    pass.setUniform("Sampler2", textures.texure2(), textures.sampler2());
-                }
+            pass.setPipeline(RenderSystem.getCompiledPipeline(submit.pipeline()));
 
-                var uniforms = getDynamicUniforms(pipelineSubmitNode.color());
-
-                RenderSystem.bindDefaultUniforms(pass);
-                pass.setUniform("DynamicTransforms", uniforms);
-
-                pipelineSubmitNode.options().accept(pass);
-
-                pass.setVertexBuffer(0, buffers.vertex().slice());
-                pass.setIndexBuffer(buffers.index(), buffers.type());
-
-                pass.drawIndexed(mesh.drawState().indexCount(), 1, 0, 0, 0);
+            var scissor = RenderSystem.getScissorStateForRenderTypeDraws();
+            if (scissor.enabled()) {
+                pass.enableScissor(scissor.x(), scissor.y(), scissor.width(), scissor.height());
             }
+            var textures = submit.textures();
+
+            if (textures.texure0() != null) {
+                pass.setUniform("Sampler0", textures.texure0(), textures.sampler0());
+            }
+            if (textures.texure1() != null) {
+                pass.setUniform("Sampler1", textures.texure1(), textures.sampler1());
+            }
+            if (textures.texure2() != null) {
+                pass.setUniform("Sampler2", textures.texure2(), textures.sampler2());
+            }
+
+            var uniforms = getDynamicUniforms(submit.color());
+
+            RenderSystem.bindDefaultUniforms(pass);
+            pass.setUniform("DynamicTransforms", uniforms);
+
+            submit.options().accept(pass);
+
+            pass.setVertexBuffer(0, executeInfo.vertexBuffer().slice());
+            pass.setIndexBuffer(executeInfo.indexBuffer(), executeInfo.indexType());
+
+            pass.drawIndexed(executeInfo.indexCount(), 1, executeInfo.firstIndex(), executeInfo.baseVertex(), 0);
         }
+    }
+
+    record Group(StagedVertexBuffer.Draw draw, PipelineSubmit submit) {
+
+    }
+
+    @Override
+    public void finishExecute(FeatureFrameContext context) {
+        this.draws.clear();
     }
 }

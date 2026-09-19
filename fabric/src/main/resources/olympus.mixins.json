@@ -6,9 +6,7 @@
   "client": [
     "GuiRendererMixin",
     "RenderBuffersMixin",
-    "PipRendererAccessor",
-    "RenderPipelinesMixin",
-    "PictureInPictureRendererAccessor"
+    "PipRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
