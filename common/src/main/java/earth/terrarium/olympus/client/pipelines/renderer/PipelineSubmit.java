@@ -31,12 +31,4 @@ public record PipelineSubmit(
         return PipelineSubmitFeatureRenderer.TYPE;
     }
 
-    public record Vertex(
-        float x,
-        float y,
-        float z,
-        float u,
-        float v,
-        int color
-    ) {}
 }

@@ -61,6 +61,7 @@ public class PipelineSubmitFeatureRenderer implements FeatureRenderer<PipelineSu
         var stagedVertexBuffer = context.stagedVertexBuffer();
 
         for (var group : this.draws) {
+            pass.pushDebugGroup(() -> "Pipeline submit " + group.submit.pipeline().getLocation());
             var submit = group.submit;
             var executeInfo = stagedVertexBuffer.getExecuteInfo(group.draw);
 
@@ -93,6 +94,8 @@ public class PipelineSubmitFeatureRenderer implements FeatureRenderer<PipelineSu
             pass.setIndexBuffer(executeInfo.indexBuffer(), executeInfo.indexType());
 
             pass.drawIndexed(executeInfo.indexCount(), 1, executeInfo.firstIndex(), executeInfo.baseVertex(), 0);
+
+            pass.popDebugGroup();
         }
     }
 
