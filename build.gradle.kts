@@ -12,10 +12,6 @@ plugins {
 }
 
 subprojects {
-    repositories {
-        mavenLocal()
-    }
-
     apply(plugin = "maven-publish")
 
     val platform = getPlatform()
