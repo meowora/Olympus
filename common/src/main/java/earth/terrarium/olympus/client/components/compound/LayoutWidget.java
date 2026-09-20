@@ -1,6 +1,5 @@
 package earth.terrarium.olympus.client.components.compound;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import earth.terrarium.olympus.client.components.base.BaseParentWidget;
 import earth.terrarium.olympus.client.components.base.renderer.WidgetRenderer;
@@ -276,7 +275,7 @@ public class LayoutWidget<T extends Layout> extends BaseParentWidget {
             if (elements.isEmpty()) return;
 
             var widgetSize = orientation.getValue(widget.getViewWidth(), widget.getViewHeight());
-            if (elements.size() == InputConstants.MOUSE_BUTTON_LEFT) {
+            if (elements.size() == 1) {
                 orientation.setPos(elements.getFirst(), widgetSize / 2 - orientation.getSize(elements.getFirst()) / 2);
             } else {
                 int spacing = (widgetSize - elements.stream().mapToInt(orientation::getSize).sum()) / (elements.size() - 1);

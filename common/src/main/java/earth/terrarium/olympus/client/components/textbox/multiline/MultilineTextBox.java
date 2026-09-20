@@ -19,9 +19,8 @@ import net.minecraft.client.input.PreeditEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
-import org.joml.Vector2ic;
-import org.jspecify.annotations.Nullable;
 
 public class MultilineTextBox extends BaseWidget {
 

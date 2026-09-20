@@ -53,7 +53,7 @@ public class TextBox extends BaseWidget {
     private int displayPos;
     private int cursorPos;
     private int highlightPos;
-    private @org.jspecify.annotations.Nullable IMEPreeditOverlay preeditOverlay;
+    private @Nullable IMEPreeditOverlay preeditOverlay;
 
 
     public TextBox(State<@NotNull String> state) {
@@ -402,7 +402,7 @@ public class TextBox extends BaseWidget {
 
 
     @Override
-    public boolean preeditUpdated(@org.jspecify.annotations.Nullable PreeditEvent event) {
+    public boolean preeditUpdated(@Nullable PreeditEvent event) {
         this.preeditOverlay = event != null ? new IMEPreeditOverlay(event, this.font, 9 + 1) : null;
         return true;
     }
